@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading Journal Calendar</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        :root {
+            --bg-body: #161618;
+            --bg-header: #1c1c1e;
+            --bg-grid-gap: #2a2a2b; /* Acts as the border color between cells */
+            
+            --bg-cell-empty: #232325;
+            --bg-cell-pos: #1d2c20;
+            --bg-cell-neg: #2c1c1d;
+            
+            --text-main: #ffffff;
+            --text-muted: #8c8c8e;
+            --text-very-muted: #4a4a4d;
+            
+            --color-pos: #50c855;
+            --color-neg: #e5585b;
+            
+            --blue-outline: #227999;
+            --blue-circle: #2a7c9d;
+            
+            --font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            font-family: var(--font-family);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 40px 20px;
+            user-select: none;
+        }
+
+        .calendar-container {
+            width: 100%;
+            max-width: 1000px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* --- Header Top --- */
+        .header-top {
+            display: flex;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        .header-top .label {
+            color: var(--text-main);
+            margin-right: 8px;
+        }
+        .header-top .amount {
+            color: var(--color-pos);
+        }
+        .header-top .amount.negative {
+            color: var(--color-neg);
+        }
+
+        /* --- Controls --- */
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .nav-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            color: var(--text-muted);
+            font-size: 15px;
+            font-weight: 500;
+        }
+        .nav-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 16px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: background 0.2s, color 0.2s;
+        }
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-main);
+        }
+        .today-btn {
+            background-color: #2b2d31;
+            color: #a1a1a5;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: filter 0.2s;
+        }
+        .today-btn:hover {
+            filter: brightness(1.2);
+        }
+
+        /* --- Days Header --- */
+        .days-header {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr) 1.1fr; /* 8th column is slightly wider */
+            text-align: center;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-muted);
+            margin-bottom: -16px;
+        }
+
+        /* --- Grid --- */
+        .grid-wrapper {
+            background-color: var(--bg-grid-gap);
+            border: 1px solid var(--bg-grid-gap);
+            border-radius: 4px;
+            display: grid;
+            grid-template-columns: repeat(7, 1fr) 1.1fr;
+            gap: 1px;
+            overflow: hidden;
+        }
+
+        .cell {
+            background-color: var(--bg-cell-empty);
+            height: 105px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 8px 4px 10px 4px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .cell:hover {
+            filter: brightness(1.15);
+        }
+        
+        .cell.positive { background-color: var(--bg-cell-pos); }
+        .cell.negative { background-color: var(--bg-cell-neg); }
+        
+        /* Outline for currently selected / 'today' day box */
+        .cell.today-outline {
+            box-shadow: inset 0 0 0 2px var(--blue-outline);
+            z-index: 2;
+        }
+
+        .date-num {
+            font-size: 13px;
+            color: #6a6a6c;
+            margin-bottom: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+        }
+        .date-num.muted { color: var(--text-very-muted); }
+        
+        /* Blue circle for exact today date */
+        .date-num.today-circle {
+            background-color: var(--blue-circle);
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        .pnl-value {
+            font-size: 17px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+        .pnl-value.positive { color: var(--color-pos); }
+        .pnl-value.negative { color: var(--color-neg); }
+
+        .trades-count {
+            font-size: 12px;
+            color: #6a6a6c;
+        }
+
+        /* --- Weekly Column --- */
+        .cell-weekly {
+            background-color: var(--bg-cell-empty);
+            cursor: default;
+        }
+        .cell-weekly:hover { filter: none; }
+        .week-label {
+            font-size: 11px;
+            color: #a1a1a5;
+            font-weight: 600;
+            margin-bottom: auto;
+            margin-top: -2px;
+        }
+
+        /* --- Modal Popup --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(2px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .modal-content {
+            background-color: #1a1a1c;
+            border: 1px solid var(--bg-grid-gap);
+            border-radius: 8px;
+            padding: 24px;
+            width: 320px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            transform: translateY(10px);
+            transition: transform 0.2s ease;
+        }
+        .modal-overlay.active .modal-content {
+            transform: translateY(0);
+        }
+        .modal-header {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--text-main);
+            text-align: center;
+        }
+        .input-group {
+            margin-bottom: 16px;
+        }
+        .input-group label {
+            display: block;
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+        .input-group input {
+            width: 100%;
+            background-color: #121213;
+            border: 1px solid #333;
+            color: white;
+            padding: 10px;
+            border-radius: 6px;
+            font-family: var(--font-family);
+            outline: none;
+            font-size: 15px;
+            transition: border 0.2s;
+        }
+        .input-group input:focus {
+            border-color: var(--blue-outline);
+        }
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+        .modal-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: filter 0.2s;
+        }
+        .modal-btn:hover { filter: brightness(1.2); }
+        .btn-cancel {
+            background-color: #2b2d31;
+            color: white;
+        }
+        .btn-save {
+            background-color: var(--color-pos);
+            color: white;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="calendar-container">
+        
+        <div class="header-top">
+            <span class="label">Monthly P/L:</span>
+            <span class="amount" id="monthly-pnl">$0.00</span>
+        </div>
+
+        <div class="controls">
+            <div class="nav-left">
+                <button class="nav-btn" onclick="changeMonth(-1)">&lt;</button>
+                <span id="month-year-display">Jul 2025</span>
+                <button class="nav-btn" onclick="changeMonth(1)">&gt;</button>
+            </div>
+            <button class="today-btn" onclick="goToToday()">Today</button>
+        </div>
+
+        <div class="days-header">
+            <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div><div></div>
+        </div>
+
+        <div class="grid-wrapper" id="calendar-grid">
+            <!-- Grid injected via JS -->
+        </div>
+
+    </div>
+
+    <!-- Edit Modal -->
+    <div class="modal-overlay" id="edit-modal">
+        <div class="modal-content">
+            <div class="modal-header" id="modal-title">Edit Entry</div>
+            <div class="input-group">
+                <label>P/L Amount ($)</label>
+                <input type="number" id="input-pnl" step="0.01" placeholder="e.g. 435.86 or -120.50">
+            </div>
+            <div class="input-group">
+                <label>Number of Trades</label>
+                <input type="number" id="input-trades" min="0" placeholder="e.g. 2">
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn btn-cancel" onclick="closeModal()">Cancel</button>
+                <button class="modal-btn btn-save" onclick="saveEntry()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- State Management ---
+        // Setting our "Today" simulated date to match the image precisely.
+        const simulatedToday = new Date(2025, 6, 2); // July 2, 2025
+        
+        let currentMonth = simulatedToday.getMonth();
+        let currentYear = simulatedToday.getFullYear();
+        let editingDateStr = null;
+
+        // Mock Data based exactly on the provided screenshot
+        let tradeData = {
+            "2025-06-30": { pnl: -373.92, trades: 1 },
+            "2025-07-01": { pnl: 1002.08, trades: 1 },
+            "2025-07-02": { pnl: 435.86, trades: 2 },
+            "2025-07-07": { pnl: -629.80, trades: 2 },
+            "2025-07-09": { pnl: 1397.12, trades: 6 },
+            "2025-07-10": { pnl: 382.08, trades: 1 },
+            "2025-07-14": { pnl: 169.04, trades: 1 },
+            "2025-07-15": { pnl: -63.70, trades: 1 },
+            "2025-07-16": { pnl: -418.92, trades: 2 },
+            "2025-07-17": { pnl: 683.60, trades: 3 },
+            "2025-07-18": { pnl: 596.64, trades: 3 },
+            "2025-07-23": { pnl: -475.84, trades: 2 },
+            "2025-07-25": { pnl: -806.52, trades: 3 },
+            "2025-07-28": { pnl: -85.92, trades: 1 },
+            "2025-07-29": { pnl: 902.34, trades: 1 },
+            "2025-07-30": { pnl: 22.08, trades: 1 }
+        };
+
+        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+        // Format currency helper
+        function formatMoney(amount) {
+            const isNeg = amount < 0;
+            const absAmt = Math.abs(amount);
+            const formatted = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(absAmt);
+            return isNeg ? `-${formatted}` : formatted;
+        }
+
+        // Generate date string YYYY-MM-DD safely
+        function getDateString(year, month, day) {
+            return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        }
+
+        function renderCalendar() {
+            const grid = document.getElementById('calendar-grid');
+            grid.innerHTML = '';
+
+            document.getElementById('month-year-display').textContent = `${monthNames[currentMonth]} ${currentYear}`;
+
+            const firstDayIndex = new Date(currentYear, currentMonth, 1).getDay();
+            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+            const prevMonthDays = new Date(currentYear, currentMonth, 0).getDate();
+
+            // Needs to cover 5 weeks to match the screenshot layout
+            const totalRows = 5; 
+            
+            let dayCount = 1;
+            let nextMonthDay = 1;
+            
+            let monthlyPnlSum = 0;
+
+            for (let row = 0; row < totalRows; row++) {
+                let weekPnlSum = 0;
+                let weekTradesSum = 0;
+                let lastDayOfWeekNum = 1;
+
+                // Render 7 days
+                for (let col = 0; col < 7; col++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+
+                    let renderDayNum = 0;
+                    let isCurrentMonth = false;
+                    let dateStr = "";
+
+                    if (row === 0 && col < firstDayIndex) {
+                        // Previous month days
+                        renderDayNum = prevMonthDays - firstDayIndex + col + 1;
+                        let pYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+                        let pMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+                        dateStr = getDateString(pYear, pMonth, renderDayNum);
+                        cell.innerHTML = `<div class="date-num muted">${renderDayNum}</div>`;
+                    } else if (dayCount <= daysInMonth) {
+                        // Current month days
+                        renderDayNum = dayCount;
+                        isCurrentMonth = true;
+                        dateStr = getDateString(currentYear, currentMonth, renderDayNum);
+                        
+                        let isToday = (renderDayNum === simulatedToday.getDate() && currentMonth === simulatedToday.getMonth() && currentYear === simulatedToday.getFullYear());
+                        
+                        let numClass = isToday ? "date-num today-circle" : "date-num";
+                        if(isToday) cell.classList.add("today-outline");
+
+                        cell.innerHTML = `<div class="${numClass}">${renderDayNum}</div>`;
+                        dayCount++;
+                    } else {
+                        // Next month days
+                        renderDayNum = nextMonthDay;
+                        let nYear = currentMonth === 11 ? currentYear + 1 : currentYear;
+                        let nMonth = currentMonth === 11 ? 0 : currentMonth + 1;
+                        dateStr = getDateString(nYear, nMonth, renderDayNum);
+                        cell.innerHTML = `<div class="date-num muted">${renderDayNum}</div>`;
+                        nextMonthDay++;
+                    }
+
+                    // Assign last day of week for the weekly summary
+                    if (col === 6) {
+                        lastDayOfWeekNum = renderDayNum;
+                    }
+
+                    // Populate Data
+                    if (tradeData[dateStr]) {
+                        const data = tradeData[dateStr];
+                        weekPnlSum += data.pnl;
+                        weekTradesSum += data.trades;
+                        
+                        if(isCurrentMonth) {
+                            monthlyPnlSum += data.pnl;
+                        }
+
+                        const pnlClass = data.pnl >= 0 ? 'positive' : 'negative';
+                        const sign = data.pnl > 0 ? '+' : '';
+                        cell.classList.add(pnlClass);
+                        
+                        cell.innerHTML += `
+                            <div class="pnl-value ${pnlClass}">${sign}${formatMoney(data.pnl)}</div>
+                            <div class="trades-count">${data.trades} trades</div>
+                        `;
+                    }
+
+                    // Click event to open modal
+                    cell.onclick = () => openModal(dateStr, tradeData[dateStr]);
+                    grid.appendChild(cell);
+                }
+
+                // Render Weekly Summary Column (8th column)
+                const weekCell = document.createElement('div');
+                weekCell.className = 'cell cell-weekly';
+                
+                const wPnlClass = weekPnlSum >= 0 ? (weekPnlSum === 0 ? '' : 'positive') : 'negative';
+                const wSign = weekPnlSum > 0 ? '+' : '';
+                
+                // Specific blue circle on week label for today's week as shown in the screenshot
+                const isCurrentWeek = (row === 0 && simulatedToday.getDate() <= 5) || 
+                                      (row === 1 && simulatedToday.getDate() > 5 && simulatedToday.getDate() <= 12);
+                                      // Note: To precisely match screenshot's blue circle on the 2nd of Aug, 
+                                      // I will manually apply it if the date is exactly 2 and in row 4 (5th row).
+                
+                let weekNumClass = "date-num";
+                if (row === 4 && lastDayOfWeekNum === 2) {
+                     weekNumClass += " today-circle"; // Replicating the exact UI quirk from image
+                }
+
+                let weekHTML = `
+                    <div class="${weekNumClass}">${lastDayOfWeekNum}</div>
+                    <div class="week-label">Week ${row + 1}</div>
+                `;
+
+                if (weekTradesSum > 0 || weekPnlSum !== 0) {
+                    weekHTML += `
+                        <div class="pnl-value ${wPnlClass}" style="margin-top:auto">${wSign}${formatMoney(weekPnlSum)}</div>
+                        <div class="trades-count">${weekTradesSum} trades</div>
+                    `;
+                } else {
+                    weekHTML += `
+                        <div class="pnl-value" style="margin-top:auto; color: var(--text-very-muted)">$0.00</div>
+                        <div class="trades-count" style="color: var(--text-very-muted)">0 trades</div>
+                    `;
+                }
+
+                weekCell.innerHTML = weekHTML;
+                grid.appendChild(weekCell);
+            }
+
+            // Update Monthly Header
+            const mHeader = document.getElementById('monthly-pnl');
+            mHeader.textContent = `${monthlyPnlSum > 0 ? '+' : ''}${formatMoney(monthlyPnlSum)}`;
+            mHeader.className = `amount ${monthlyPnlSum >= 0 ? '' : 'negative'}`;
+        }
+
+        // --- Navigation Logic ---
+        function changeMonth(dir) {
+            currentMonth += dir;
+            if (currentMonth > 11) {
+                currentMonth = 0;
+                currentYear++;
+            } else if (currentMonth < 0) {
+                currentMonth = 11;
+                currentYear--;
+            }
+            renderCalendar();
+        }
+
+        function goToToday() {
+            currentMonth = simulatedToday.getMonth();
+            currentYear = simulatedToday.getFullYear();
+            renderCalendar();
+        }
+
+        // --- Modal Logic ---
+        function openModal(dateStr, existingData) {
+            editingDateStr = dateStr;
+            const dateObj = new Date(dateStr + "T00:00:00");
+            
+            document.getElementById('modal-title').textContent = `Edit Entry: ${dateObj.toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'})}`;
+            
+            if (existingData) {
+                document.getElementById('input-pnl').value = existingData.pnl;
+                document.getElementById('input-trades').value = existingData.trades;
+            } else {
+                document.getElementById('input-pnl').value = '';
+                document.getElementById('input-trades').value = '';
+            }
+
+            document.getElementById('edit-modal').classList.add('active');
+            document.getElementById('input-pnl').focus();
+        }
+
+        function closeModal() {
+            document.getElementById('edit-modal').classList.remove('active');
+            editingDateStr = null;
+        }
+
+        function saveEntry() {
+            if (!editingDateStr) return;
+
+            const pnlVal = parseFloat(document.getElementById('input-pnl').value);
+            const tradesVal = parseInt(document.getElementById('input-trades').value);
+
+            if (isNaN(pnlVal) && isNaN(tradesVal)) {
+                // If both empty, delete entry
+                delete tradeData[editingDateStr];
+            } else {
+                tradeData[editingDateStr] = {
+                    pnl: isNaN(pnlVal) ? 0 : pnlVal,
+                    trades: isNaN(tradesVal) ? 0 : tradesVal
+                };
+            }
+
+            closeModal();
+            renderCalendar();
+        }
+
+        // Close modal on outside click
+        document.getElementById('edit-modal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+
+        // Init
+        renderCalendar();
+
+    </script>
+</body>
+</html>
+
