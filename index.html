@@ -1,0 +1,1828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TopstepX</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600&display=swap');
+
+        :root {
+            --bg-body: #0a0a0c;       
+            --bg-panel: #101014;      
+            --bg-grid-gap: #333539;   
+            
+            --bg-cell-empty: #101014; 
+            --bg-cell-pos: #0a1c0f;   
+            --bg-cell-neg: #2d1013;   
+            
+            --bg-cell-empty-dim: #1c1d21; 
+            --bg-cell-pos-dim: #0a160d; 
+            --bg-cell-neg-dim: #241618;
+
+            --bg-btn: #2b2d31;
+            --bg-modal: #151518;
+            --bg-input: #1a1a1e;
+
+            --text-main: #ffffff;
+            --text-muted: #717175;
+            --text-week: #d1d1d6;
+            
+            --color-pos: #50c855;
+            --color-neg: #e5585b;
+
+            --accent-blue: #2a7c9d;
+            --accent-outline: #2a7c9d;
+
+            font-family: 'Oswald', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* --- Auth Screen --- */
+        #auth-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            gap: 24px;
+            width: 100%;
+        }
+        .auth-title {
+            font-size: 24px;
+            font-weight: 500;
+            color: var(--text-muted);
+            letter-spacing: 0.5px;
+        }
+        
+        /* Main App Container */
+        #main-app {
+            width: 100%;
+            display: none; 
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* --- Top Status Bar --- */
+        .top-status-bar {
+            width: 100%;
+            background-color: var(--bg-body);
+            border-bottom: 1px solid var(--bg-grid-gap);
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+        }
+        .ts-left { position: relative; }
+        .account-selector {
+            background-color: transparent;
+            border: 1px solid var(--bg-grid-gap);
+            border-radius: 4px;
+            padding: 6px 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            font-size: 13px;
+            font-weight: 500;
+            transition: border-color 0.2s;
+        } 
+        .account-selector:hover { border-color: #555; }
+        .acct-badge {
+            color: #eab308;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .account-dropdown {
+            position: absolute; top: 100%; left: 0; margin-top: 8px;
+            background-color: var(--bg-modal); border: 1px solid var(--bg-grid-gap);
+            border-radius: 6px; min-width: 220px; z-index: 200; box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            display: none; flex-direction: column; overflow: hidden;
+        }
+        .account-dropdown.show { display: flex; }
+        .dropdown-item { padding: 12px 16px; font-size: 13px; cursor: pointer; border-bottom: 1px solid var(--bg-grid-gap); display: flex; align-items: center;}
+        .dropdown-item:hover { background-color: var(--bg-input); }
+        .dropdown-item:last-child { border-bottom: none; color: var(--text-main); font-weight: 500;}
+
+        /* Top Bar Stats */
+        .ts-right { display: flex; align-items: center; gap: 8px; }
+        
+        .stat-box { 
+            background-color: var(--bg-modal);
+            border: 1px solid var(--bg-grid-gap);
+            padding: 6px 12px;
+            border-radius: 4px;
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .stat-box .stat-label { color: var(--text-muted); }
+        .stat-box .stat-val { color: var(--text-main); font-weight: 600; }
+
+        .stat-box.rpl-pos { background-color: #204d2e; border-color: #204d2e; } 
+        .stat-box.rpl-pos .stat-label { color: #8fd19e; }
+        .stat-box.rpl-pos .stat-val { color: #ffffff; }
+
+        .stat-box.rpl-neg { background-color: #5c2424; border-color: #5c2424; }
+        .stat-box.rpl-neg .stat-label { color: #d18f8f; }
+        .stat-box.rpl-neg .stat-val { color: #ffffff; }
+
+        .info-btn {
+            background: transparent; border: none; color: var(--text-muted);
+            display: flex; justify-content: center; align-items: center;
+            cursor: pointer; transition: color 0.2s; margin-left: 4px; padding: 0 4px;
+        }
+        .info-btn:hover { color: white; }
+
+        /* --- Main Content Area --- */
+        .app-content {
+            width: 100%;
+            max-width: 1020px;
+            padding: 30px 20px 100px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .app-panel {
+            background-color: var(--bg-panel);
+            width: 100%;
+            border-radius: 8px;
+            padding: 24px 28px 28px 28px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            border: 1px solid var(--bg-grid-gap);
+        }
+
+        /* --- Analytics Section --- */
+        .analytics-container { display: flex; flex-direction: column; gap: 16px; width: 100%; }
+        .analytics-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+        @media (max-width: 800px) { .analytics-row { grid-template-columns: 1fr; } }
+        
+        .analytics-card {
+            background-color: var(--bg-panel); border: 1px solid var(--bg-grid-gap);
+            border-radius: 8px; padding: 20px; display: flex; flex-direction: column; justify-content: center;
+        }
+        .analytics-card.split { flex-direction: row; justify-content: space-between; align-items: center; }
+        
+        .ac-title {
+            font-size: 11px; color: var(--text-muted); text-transform: capitalize;
+            font-weight: 500; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;
+        }
+        .ac-info {
+            background: var(--bg-grid-gap); color: #fff; border-radius: 50%;
+            width: 14px; height: 14px; display: flex; justify-content: center; align-items: center;
+            font-size: 10px; cursor: help;
+        }
+        .ac-val { font-size: 24px; font-weight: 600; letter-spacing: 0.5px; }
+        
+        /* Bar Gauge */
+        .ac-bar-container { width: 120px; display: flex; flex-direction: column; gap: 4px;}
+        .ac-bar-track {
+            height: 6px; background-color: var(--color-neg); border-radius: 3px;
+            overflow: hidden; width: 100%; display: flex;
+        }
+        .ac-bar-fill { height: 100%; background-color: var(--color-pos); width: 50%; transition: width 0.3s; }
+        .ac-bar-labels { display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; }
+        
+        /* SVG Charts */
+        .ac-chart-wrapper { position: relative; display: flex; align-items: center; justify-content: center; }
+        .donut-badge {
+            position: absolute; border-radius: 3px; font-size: 10px; font-weight: 600; 
+            padding: 2px 5px; color: #fff;
+            opacity: 0; pointer-events: none; transition: opacity 0.2s ease;
+        }
+        .ac-chart-wrapper:hover .donut-badge { opacity: 1; }
+        .db-win { background-color: var(--color-pos); color: #000; bottom: -5px; right: -15px; }
+        .db-loss { background-color: var(--color-neg); bottom: -5px; left: -15px; }
+        .db-pf-win { background-color: transparent; color: var(--color-pos); top: -5px; left: -35px; }
+        .db-pf-loss { background-color: transparent; color: var(--color-neg); bottom: -5px; right: -35px; }
+
+        /* Canvas */
+        .chart-wrapper { position: relative; height: 260px; width: 100%; margin-top: 16px; }
+        #balance-chart { display: block; width: 100%; height: 100%; }
+
+        /* --- Calendar Header & Controls --- */
+        .top-header {
+            display: flex; justify-content: center; align-items: center;
+            font-size: 15px; font-weight: 600; user-select: none;
+        }
+        .top-header span:first-child { color: var(--text-main); margin-right: 6px; }
+        .monthly-pnl-val { color: var(--color-pos); }
+        .monthly-pnl-val.negative { color: var(--color-neg); }
+        .monthly-pnl-val.neutral { color: var(--text-muted); }
+
+        .controls {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-top: 4px; user-select: none;
+        }
+        .nav-group {
+            display: flex; align-items: center; gap: 16px;
+            font-size: 14px; font-weight: 500; color: var(--text-muted);
+        }
+        .icon-btn {
+            background: transparent; border: none; color: var(--text-muted);
+            font-size: 16px; cursor: pointer; padding: 4px; border-radius: 4px;
+            display: flex; align-items: center; justify-content: center; transition: color 0.2s;
+        }
+        .icon-btn:hover { color: var(--text-main); }
+        .today-btn {
+            background-color: var(--bg-btn); color: #a1a1aa; border: none;
+            padding: 7px 16px; border-radius: 6px; font-size: 13px;
+            font-weight: 500; cursor: pointer; transition: background 0.2s, color 0.2s;
+        }
+        .today-btn:hover { background-color: #36383d; color: var(--text-main); }
+
+        /* --- Calendar Grid --- */
+        .days-header {
+            display: grid; grid-template-columns: repeat(7, 1fr); text-align: center;
+            font-size: 11px; font-weight: 400; color: var(--text-muted); margin-bottom: -16px; user-select: none;
+        }
+        
+        .calendar-grid {
+            background-color: var(--bg-grid-gap); border: 1px solid var(--bg-grid-gap);
+            border-radius: 4px; display: grid; grid-template-columns: repeat(7, 1fr);
+            gap: 1px; overflow: hidden; user-select: none;
+        }
+
+        .cell {
+            background-color: var(--bg-cell-empty); height: 105px; position: relative;
+            display: flex; flex-direction: column; justify-content: center; align-items: center; transition: filter 0.15s ease;
+        }
+        .cell.interactive:hover { filter: brightness(1.15); }
+        .cell.today-outline { box-shadow: inset 0 0 0 1.5px var(--accent-outline); z-index: 2; }
+        .cell.positive { background-color: var(--bg-cell-pos); }
+        .cell.negative { background-color: var(--bg-cell-neg); }
+        .cell.out-of-month { background-color: var(--bg-cell-empty-dim); }
+        .cell.out-of-month.positive { background-color: var(--bg-cell-pos-dim); }
+        .cell.out-of-month.negative { background-color: var(--bg-cell-neg-dim); }
+        .cell.out-of-month .date-number, .cell.out-of-month .data-wrapper { opacity: 0.45; }
+
+        .date-number {
+            position: absolute; top: 6px; left: 0; width: 100%; text-align: center;
+            font-size: 12px; color: var(--text-muted); font-weight: 500; display: flex; justify-content: center;
+        }
+        .date-number .circle {
+            display: flex; align-items: center; justify-content: center;
+            width: 22px; height: 22px; border-radius: 50%;
+        }
+        .date-number .circle.today-circle { background-color: var(--accent-blue); color: #ffffff; font-weight: 600; }
+
+        .data-wrapper { display: flex; flex-direction: column; align-items: center; margin-top: 14px; }
+        .week-label { font-size: 11px; font-weight: 600; color: var(--text-week); margin-bottom: 2px; line-height: 1; }
+        .pnl-text { font-size: 15px; font-weight: 600; letter-spacing: 0.2px; margin-bottom: 2px; line-height: 1.2; }
+        .pnl-text.positive { color: var(--color-pos); }
+        .pnl-text.negative { color: var(--color-neg); }
+        .pnl-text.neutral { color: var(--text-muted); }
+        .trades-text { font-size: 11px; color: var(--text-muted); font-weight: 400; line-height: 1; }
+
+        /* --- Trades Table Section --- */
+        .trades-panel { padding: 0; overflow: hidden; }
+        .trades-header {
+            display: flex; align-items: center; padding: 16px 20px; font-size: 14px;
+            font-weight: 500; color: var(--text-muted); border-bottom: 1px solid var(--bg-grid-gap); user-select: none;
+        }
+        .trades-header-icon {
+            margin-left: 6px; font-size: 12px; background: #2a2b2f; color: #fff;
+            border-radius: 50%; width: 16px; height: 16px; display: flex; justify-content: center; align-items: center; cursor: help;
+        }
+        
+        .trades-table-container { width: 100%; overflow-x: auto; }
+        .trades-table { width: 100%; border-collapse: collapse; text-align: left; min-width: 800px; }
+        .trades-table th, .trades-table td { padding: 12px 20px; font-size: 12px; font-weight: 400; border-bottom: 1px solid var(--bg-grid-gap); }
+        .trades-table th { color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; user-select: none; }
+        .trades-table tbody tr { transition: background 0.2s; cursor: pointer; }
+        .trades-table tbody tr:hover { background-color: rgba(255, 255, 255, 0.02); }
+        .no-rows { text-align: center; color: var(--text-muted); padding: 40px; font-size: 13px; font-weight: 500; }
+        .table-footer {
+            display: flex; justify-content: flex-end; align-items: center; padding: 12px 20px;
+            font-size: 12px; color: var(--text-muted); gap: 20px; user-select: none;
+        }
+        .footer-arrows { letter-spacing: 12px; cursor: pointer; }
+
+        /* --- Floating Buttons --- */
+        .fab {
+            position: fixed; bottom: 30px; right: 30px; background-color: var(--bg-grid-gap);
+            color: var(--text-main); border: 1px solid #444; padding: 12px 24px; border-radius: 8px;
+            font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 15px; cursor: pointer;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5); transition: filter 0.2s, transform 0.2s; z-index: 50;
+        }
+        .fab:hover { filter: brightness(1.2); transform: translateY(-2px); }
+
+        .fab-left {
+            position: fixed; bottom: 30px; left: 30px; background-color: var(--bg-grid-gap);
+            color: var(--text-main); border: 1px solid #444; padding: 12px 20px; border-radius: 8px;
+            font-family: 'Oswald', sans-serif; font-weight: 600; font-size: 15px; cursor: pointer;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5); transition: filter 0.2s, transform 0.2s; z-index: 50;
+            display: none; align-items: center; gap: 8px;
+        }
+        .fab-left:hover { filter: brightness(1.2); transform: translateY(-2px); }
+
+        /* --- Buttons --- */
+        .btn {
+            padding: 12px; border: none; border-radius: 6px;
+            font-weight: 600; font-size: 14px; cursor: pointer; transition: filter 0.2s;
+            font-family: 'Oswald', sans-serif; display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn:hover { filter: brightness(1.15); }
+        .btn-cancel { background-color: var(--bg-btn); color: var(--text-main); }
+        .btn-save { background-color: var(--color-pos); color: #000; }
+        .btn-delete { background-color: transparent; border: 1px solid var(--color-neg); color: var(--color-neg); margin-top:12px; width:100%; }
+        
+        .modal-actions { display: flex; gap: 12px; margin-top: 24px; }
+        .modal-actions .btn { flex: 1; }
+
+        /* --- Modals --- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(4px); display: flex;
+            justify-content: center; align-items: center; z-index: 1000; opacity: 0;
+            pointer-events: none; transition: opacity 0.2s ease;
+        }
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
+        
+        .modal-box {
+            background-color: var(--bg-modal); border: 1px solid var(--bg-grid-gap);
+            border-radius: 12px; width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto;
+            padding: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.8); transform: scale(0.95); transition: transform 0.2s ease;
+        }
+        .modal-overlay.active .modal-box { transform: scale(1); }
+        
+        .modal-title {
+            font-size: 18px; font-weight: 600; margin-bottom: 24px; color: var(--text-main);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .close-icon { cursor: pointer; color: var(--text-muted); font-size: 20px; transition: color 0.2s; }
+        .close-icon:hover { color: white; }
+
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .input-group { margin-bottom: 16px; }
+        .input-group.full-width { grid-column: span 2; }
+        
+        .input-group label {
+            display: block; font-size: 12px; font-weight: 400; color: var(--text-muted);
+            margin-bottom: 8px; text-transform: uppercase;
+        }
+        .input-group input, .input-group select, .input-group textarea {
+            width: 100%; background-color: var(--bg-input); border: 1px solid var(--bg-grid-gap);
+            color: white; padding: 12px; border-radius: 6px; font-family: inherit; font-size: 14px;
+            outline: none; transition: border-color 0.2s;
+        }
+        .input-group textarea { resize: vertical; min-height: 80px; }
+        .input-group input:focus, .input-group select:focus, .input-group textarea:focus { border-color: var(--accent-outline); }
+        
+        .slider-wrapper { display: flex; align-items: center; gap: 12px; }
+        .slider-val { font-size: 14px; font-weight: 500; min-width: 35px; color: var(--accent-blue); }
+        input[type=range] { flex: 1; accent-color: var(--accent-blue); }
+        
+        .img-preview-container { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+        .img-thumb {
+            width: 60px; height: 60px; border-radius: 4px; object-fit: cover;
+            border: 1px solid var(--bg-grid-gap); cursor: pointer;
+        }
+
+        .auth-divider { text-align: center; margin: 24px 0; color: var(--text-muted); font-size: 12px; font-weight: 500; }
+        .auth-error { color: var(--color-neg); font-size: 13px; text-align: center; margin-bottom: 12px; min-height: 18px; }
+
+        .fullscreen-img { max-width: 95%; max-height: 90vh; border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
+        .close-img-btn { position: absolute; top: 20px; right: 30px; color: white; font-size: 30px; font-weight: 400; cursor: pointer; z-index: 1010; }
+
+        .overview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+        .overview-item { background: var(--bg-input); padding: 12px; border-radius: 6px; border: 1px solid var(--bg-grid-gap); }
+        .overview-item label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 4px;}
+        .overview-item .val { font-size: 15px; font-weight: 500; }
+        .overview-item.full { grid-column: span 2; }
+    </style>
+</head>
+<body>
+
+    <!-- AUTHENTICATION SCREEN -->
+    <div id="auth-screen">
+        <div class="auth-title">Sign in to continue</div>
+        <button class="btn btn-save" style="padding: 12px 32px; width: auto; flex: none;" onclick="openAuthModal()">Sign In</button>
+    </div>
+
+    <!-- MAIN APP (Hidden until signed in) -->
+    <div id="main-app">
+        
+        <!-- TOP STATUS BAR -->
+        <div id="top-status-bar" class="top-status-bar">
+            <div class="ts-left">
+                <div class="account-selector" onclick="document.getElementById('account-dropdown').classList.toggle('show')">
+                    <div id="active-account-display">Select Account</div>
+                    <span style="font-size: 10px; margin-left: 8px; color: var(--text-muted);">▼</span>
+                </div>
+                <div id="account-dropdown" class="account-dropdown">
+                    <!-- Dynamic Account List Here -->
+                </div>
+            </div>
+            <div class="ts-right">
+                <div class="stat-box" id="ts-bal-box"><span class="stat-label">BAL:</span> <span class="stat-val" id="ts-bal">$0.00</span></div>
+                <div class="stat-box" id="ts-dll-box"><span class="stat-label">DLL:</span> <span class="stat-val" id="ts-dll">$0.00</span></div>
+                <div class="stat-box" id="ts-rpl-box"><span class="stat-label">RP&L:</span> <span class="stat-val" id="ts-rpl">$0.00</span></div>
+                <button class="info-btn" onclick="openAccountInfo()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="app-content">
+
+            <!-- ANALYTICS SECTION -->
+            <div class="analytics-container" id="analytics-section" style="display: none;">
+                <!-- Top Row -->
+                <div class="analytics-row">
+                    <div class="analytics-card">
+                        <div class="ac-title">Total P&L <span class="ac-info">?</span></div>
+                        <div class="ac-val color-neg" id="a-total-pnl">-$0.00</div>
+                    </div>
+                    <div class="analytics-card split">
+                        <div>
+                            <div class="ac-title">Trade Win % <span class="ac-info">?</span></div>
+                            <div class="ac-val" id="a-trade-win-perc">0.00%</div>
+                        </div>
+                        <div class="ac-chart-wrapper">
+                            <svg width="90" height="45" viewBox="0 0 100 50">
+                                <path d="M 90 50 A 40 40 0 0 0 10 50" fill="none" stroke="var(--color-neg)" stroke-width="12" stroke-linecap="round"/>
+                                <path id="a-trade-win-path" d="M 90 50 A 40 40 0 0 0 10 50" fill="none" stroke="var(--color-pos)" stroke-width="12" stroke-dasharray="125.6" stroke-dashoffset="125.6" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s;"/>
+                            </svg>
+                            <div class="donut-badge db-win" id="a-trade-wins">0</div>
+                            <div class="donut-badge db-loss" id="a-trade-losses">0</div>
+                        </div>
+                    </div>
+                    <div class="analytics-card split">
+                        <div>
+                            <div class="ac-title">Avg Win / Avg Loss <span class="ac-info">?</span></div>
+                            <div class="ac-val" id="a-avg-ratio">0.00</div>
+                        </div>
+                        <div class="ac-bar-container">
+                            <div class="ac-bar-track">
+                                <div id="a-avg-bar" class="ac-bar-fill"></div>
+                            </div>
+                            <div class="ac-bar-labels">
+                                <span id="a-avg-win-val" class="color-pos">$0.00</span>
+                                <span id="a-avg-loss-val" class="color-neg">-$0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Middle Row -->
+                <div class="analytics-row">
+                    <div class="analytics-card split">
+                        <div>
+                            <div class="ac-title">Day Win % <span class="ac-info">?</span></div>
+                            <div class="ac-val" id="a-day-win-perc">0.00%</div>
+                        </div>
+                        <div class="ac-chart-wrapper">
+                            <svg width="90" height="45" viewBox="0 0 100 50">
+                                <path d="M 90 50 A 40 40 0 0 0 10 50" fill="none" stroke="var(--color-neg)" stroke-width="12" stroke-linecap="round"/>
+                                <path id="a-day-win-path" d="M 90 50 A 40 40 0 0 0 10 50" fill="none" stroke="var(--color-pos)" stroke-width="12" stroke-dasharray="125.6" stroke-dashoffset="125.6" stroke-linecap="round" style="transition: stroke-dashoffset 0.5s;"/>
+                            </svg>
+                            <div class="donut-badge db-win" id="a-day-wins">0</div>
+                        </div>
+                    </div>
+                    <div class="analytics-card split">
+                        <div>
+                            <div class="ac-title">Profit Factor <span class="ac-info">?</span></div>
+                            <div class="ac-val" id="a-profit-factor">0.00</div>
+                        </div>
+                        <div class="ac-chart-wrapper">
+                            <svg width="85" height="85" viewBox="0 0 100 100">
+                                <circle cx="50" cy="50" r="40" fill="none" stroke="var(--color-neg)" stroke-width="12" />
+                                <circle id="a-pf-path" cx="50" cy="50" r="40" fill="none" stroke="var(--color-pos)" stroke-width="12" stroke-dasharray="251.2" stroke-dashoffset="125.6" transform="rotate(-90 50 50)" style="transition: stroke-dashoffset 0.5s;"/>
+                            </svg>
+                            <div class="donut-badge db-pf-win" id="a-pf-gross-win">$0.00</div>
+                            <div class="donut-badge db-pf-loss" id="a-pf-gross-loss">-$0.00</div>
+                        </div>
+                    </div>
+                    <div class="analytics-card">
+                        <div class="ac-title">Best Day % of Total Profit <span class="ac-info">?</span></div>
+                        <div class="ac-val" id="a-best-day">0.00%</div>
+                    </div>
+                </div>
+
+                <!-- Chart Row -->
+                <div class="analytics-card" style="padding: 24px;">
+                    <div class="ac-title" style="margin-bottom:0;">Daily Account Balance <span class="ac-info">?</span></div>
+                    <div class="chart-wrapper">
+                        <canvas id="balance-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CALENDAR PANEL -->
+            <div class="app-panel">
+                <div class="top-header">
+                    <span>Monthly P/L:</span>
+                    <span id="monthly-pnl" class="monthly-pnl-val neutral">$0.00</span>
+                </div>
+                <div class="controls">
+                    <div class="nav-group">
+                        <button class="icon-btn" onclick="changeMonth(-1)">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                        </button>
+                        <span id="month-year-label">Month Year</span>
+                        <button class="icon-btn" onclick="changeMonth(1)">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                        </button>
+                    </div>
+                    <button class="today-btn" onclick="goToToday()">Today</button>
+                </div>
+                <div class="days-header">
+                    <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
+                </div>
+                <div class="calendar-grid" id="calendar-grid">
+                    <div style="grid-column: span 7; text-align: center; padding: 20px; color: var(--text-muted); font-size: 13px;">Loading Calendar...</div>
+                </div>
+            </div>
+
+            <!-- TRADES TABLE PANEL -->
+            <div class="app-panel trades-panel">
+                <div class="trades-header">
+                    Trades <div class="trades-header-icon">?</div>
+                </div>
+                <div class="trades-table-container">
+                    <table class="trades-table">
+                        <thead>
+                            <tr>
+                                <th>Ticker</th>
+                                <th>Side</th>
+                                <th>Entry Time</th>
+                                <th>Exit Time</th>
+                                <th>Size</th>
+                                <th>R:R</th>
+                                <th>Rating</th>
+                                <th>P/L</th>
+                            </tr>
+                        </thead>
+                        <tbody id="trades-tbody">
+                            <!-- Rows injected here -->
+                        </tbody>
+                    </table>
+                    <div id="no-trades-msg" class="no-rows">No rows</div>
+                </div>
+                <div class="table-footer">
+                    <span>Rows per page: 100 ▾</span>
+                    <span id="pagination-info">0-0 of 0</span>
+                    <span class="footer-arrows">&lt; &gt;</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- FLOATING ADD BUTTON -->
+        <button class="fab" onclick="openTradeForm()">Add Trade</button>
+    </div>
+
+    <!-- PROFILE BUTTON -->
+    <button class="fab-left" id="profile-btn" onclick="openProfileModal()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+        Profile
+    </button>
+
+    <!-- AUTHENTICATION MODAL -->
+    <div class="modal-overlay" id="auth-modal">
+        <div class="modal-box" style="max-width: 380px;">
+            <div class="modal-title">
+                <span>Account Login</span>
+                <span class="close-icon" onclick="closeModals()">✕</span>
+            </div>
+            <div class="auth-error" id="auth-error"></div>
+            
+            <div class="input-group">
+                <label>Email Address</label>
+                <input type="email" id="auth-email" placeholder="you@example.com">
+            </div>
+            <div class="input-group">
+                <label>Password</label>
+                <input type="password" id="auth-password" placeholder="••••••••">
+            </div>
+            <div class="modal-actions" style="margin-top: 16px;">
+                <button class="btn btn-save" onclick="handleEmailLogin()">Sign In</button>
+                <button class="btn btn-cancel" onclick="handleEmailSignup()">Create Account</button>
+            </div>
+
+            <div class="auth-divider">— OR —</div>
+
+            <button class="btn btn-cancel" style="width: 100%; border: 1px solid var(--bg-grid-gap); flex: none;" onclick="handleGoogleLogin()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+                Sign in with Google
+            </button>
+        </div>
+    </div>
+
+    <!-- PROFILE MODAL -->
+    <div class="modal-overlay" id="profile-modal">
+        <div class="modal-box" style="max-width: 320px; text-align: center;">
+            <div class="modal-title" style="justify-content: center; margin-bottom: 8px;">Your Account</div>
+            <div style="color: var(--text-muted); margin-bottom: 24px; font-weight: 500;" id="profile-email-display">user@example.com</div>
+            <button class="btn btn-delete" style="width: 100%; margin-top: 0; flex: none;" onclick="handleLogout()">Log Out</button>
+            <button class="btn btn-cancel" style="width: 100%; margin-top: 12px; flex: none;" onclick="closeModals()">Close</button>
+        </div>
+    </div>
+
+    <!-- CREATE/EDIT ACCOUNT MODAL -->
+    <div class="modal-overlay" id="account-form-modal">
+        <div class="modal-box" style="max-width: 400px;">
+            <div class="modal-title">
+                <span id="account-modal-title">Create Account</span>
+                <span class="close-icon" onclick="closeModals()">✕</span>
+            </div>
+            <div class="input-group">
+                <label>Balance</label>
+                <input type="number" id="a-balance" step="0.01" placeholder="e.g. 50000">
+            </div>
+            <div class="input-group">
+                <label>Account Type</label>
+                <select id="a-type" onchange="toggleAccountFields()">
+                    <option value="Prop Firm">Prop Firm</option>
+                    <option value="Personal">Personal</option>
+                </select>
+            </div>
+            <!-- Prop Firm Specifics -->
+            <div class="form-grid" id="group-prop">
+                <div class="input-group">
+                    <label>Prop Firm Name</label>
+                    <input type="text" id="a-firm" placeholder="e.g. Topstep">
+                </div>
+                <div class="input-group">
+                    <label>Prop Account Type</label>
+                    <select id="a-prop-type" onchange="toggleAccountFields()">
+                        <option value="1-step">1-Step</option>
+                        <option value="2-step">2-Step</option>
+                        <option value="Funded">Funded</option>
+                    </select>
+                </div>
+            </div>
+            <!-- Personal Specifics -->
+            <div class="input-group" id="group-broker" style="display:none;">
+                <label>Broker Name</label>
+                <input type="text" id="a-broker" placeholder="e.g. Interactive Brokers">
+            </div>
+            <!-- Drawdown Details -->
+            <div class="form-grid" id="group-drawdown">
+                <div class="input-group">
+                    <label>Max Drawdown ($)</label>
+                    <input type="number" id="a-max-dd" step="0.01" placeholder="e.g. 2000">
+                </div>
+                <div class="input-group">
+                    <label>Daily Drawdown ($)</label>
+                    <input type="number" id="a-daily-dd" step="0.01" placeholder="e.g. 1000">
+                </div>
+            </div>
+            <!-- Target Details -->
+            <div class="input-group" id="group-target">
+                <label>Profit Target ($)</label>
+                <input type="number" id="a-target" step="0.01" placeholder="e.g. 3000">
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn btn-cancel" onclick="closeModals()">Cancel</button>
+                <button class="btn btn-save" onclick="saveAccount()">Save Account</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ACCOUNT INFO MODAL -->
+    <div class="modal-overlay" id="account-info-modal">
+        <div class="modal-box" style="max-width: 400px;">
+            <div class="modal-title">
+                <span id="ai-title">Account Details</span>
+                <span class="close-icon" onclick="closeModals()">✕</span>
+            </div>
+            
+            <div class="overview-grid">
+                <div class="overview-item"><label>Balance</label><div class="val" id="ai-bal"></div></div>
+                <div class="overview-item"><label>Account Type</label><div class="val" id="ai-type"></div></div>
+                <div class="overview-item full" id="ai-provider-group"><label id="ai-provider-label">Provider</label><div class="val" id="ai-provider"></div></div>
+                <div class="overview-item" id="ai-daily-group"><label>Daily Loss Limit</label><div class="val color-neg" id="ai-daily-dd"></div></div>
+                <div class="overview-item" id="ai-max-group"><label>Max Drawdown</label><div class="val color-neg" id="ai-max-dd"></div></div>
+                <div class="overview-item full" id="ai-target-group"><label>Profit Target</label><div class="val color-pos" id="ai-target"></div></div>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn btn-cancel" onclick="openEditAccount()">Edit Details</button>
+            </div>
+            <button class="btn btn-delete" onclick="deleteAccount()">Delete Account</button>
+        </div>
+    </div>
+
+    <!-- TRADE FORM MODAL (Add/Edit) -->
+    <div class="modal-overlay" id="form-modal">
+        <div class="modal-box">
+            <div class="modal-title">
+                <span id="form-modal-title">Log a Trade</span>
+                <span class="close-icon" onclick="closeModals()">✕</span>
+            </div>
+            
+            <div class="form-grid">
+                <div class="input-group">
+                    <label>Ticker</label>
+                    <input type="text" id="t-ticker" placeholder="e.g. AAPL, BTC/USD">
+                </div>
+                <div class="input-group">
+                    <label>Side</label>
+                    <select id="t-side">
+                        <option value="Buy">Buy ↑</option>
+                        <option value="Sell">Sell ↓</option>
+                    </select>
+                </div>
+                
+                <div class="input-group">
+                    <label>Entry Date & Time</label>
+                    <input type="datetime-local" id="t-entry">
+                </div>
+                <div class="input-group">
+                    <label>Exit Date & Time</label>
+                    <input type="datetime-local" id="t-exit">
+                </div>
+
+                <div class="input-group">
+                    <label>Position Size</label>
+                    <input type="number" id="t-size" step="any" placeholder="e.g. 100">
+                </div>
+                <div class="input-group">
+                    <label>P/L ($)</label>
+                    <input type="number" id="t-pnl" step="0.01" placeholder="e.g. 450.50 or -120">
+                </div>
+
+                <div class="input-group">
+                    <label>Risk:Reward (1:X)</label>
+                    <div class="slider-wrapper">
+                        <input type="range" id="t-rr" min="1" max="10" step="0.1" value="1" oninput="document.getElementById('t-rr-val').textContent = '1:' + this.value">
+                        <span class="slider-val" id="t-rr-val">1:1</span>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>Rating (1-10)</label>
+                    <div class="slider-wrapper">
+                        <input type="range" id="t-rating" min="1" max="10" step="1" value="5" oninput="document.getElementById('t-rating-val').textContent = this.value">
+                        <span class="slider-val" id="t-rating-val">5</span>
+                    </div>
+                </div>
+
+                <div class="input-group full-width">
+                    <label>Notes</label>
+                    <textarea id="t-notes" placeholder="What was the setup? Emotions?"></textarea>
+                </div>
+
+                <div class="input-group full-width">
+                    <label>Screenshots (Upload multiple)</label>
+                    <input type="file" id="t-images" multiple accept="image/*" onchange="previewFiles()">
+                    <div class="img-preview-container" id="t-img-previews"></div>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn btn-cancel" onclick="closeModals()">Cancel</button>
+                <button class="btn btn-save" id="save-trade-btn" onclick="saveTrade()">Save Trade</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TRADE OVERVIEW MODAL -->
+    <div class="modal-overlay" id="overview-modal">
+        <div class="modal-box">
+            <div class="modal-title">
+                <span id="o-ticker">Trade Overview</span>
+                <span class="close-icon" onclick="closeModals()">✕</span>
+            </div>
+            
+            <div class="overview-grid">
+                <div class="overview-item"><label>P/L</label><div class="val" id="o-pnl"></div></div>
+                <div class="overview-item"><label>Side</label><div class="val" id="o-side"></div></div>
+                <div class="overview-item"><label>Entry Time</label><div class="val" id="o-entry"></div></div>
+                <div class="overview-item"><label>Exit Time</label><div class="val" id="o-exit"></div></div>
+                <div class="overview-item"><label>Position Size</label><div class="val" id="o-size"></div></div>
+                <div class="overview-item"><label>R:R</label><div class="val" id="o-rr"></div></div>
+                <div class="overview-item"><label>Rating</label><div class="val" id="o-rating"></div></div>
+                <div class="overview-item full"><label>Notes</label><div class="val" id="o-notes" style="font-weight: 400; font-size: 13px;"></div></div>
+                <div class="overview-item full" id="o-img-container" style="display:none;">
+                    <label>Screenshots</label>
+                    <div class="img-preview-container" id="o-images"></div>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn btn-cancel" onclick="openEditFromOverview()">Edit Trade</button>
+            </div>
+            <button class="btn btn-delete" onclick="deleteTradeFromOverview()">Delete Trade</button>
+        </div>
+    </div>
+
+    <!-- FULLSCREEN IMAGE VIEWER -->
+    <div class="modal-overlay" id="image-viewer-modal">
+        <span class="close-img-btn" onclick="closeImageViewer()">✕</span>
+        <img src="" id="fullscreen-img" class="fullscreen-img">
+    </div>
+
+    <!-- Firebase Integration -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBTARPuR_3u2NjdA_i9Hao5IIAWWHyakfI",
+            authDomain: "journey-2f9d5.firebaseapp.com",
+            projectId: "journey-2f9d5",
+            messagingSenderId: "202072590063",
+            appId: "1:202072590063:web:416b7b098f9198f09afd1a"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const googleProvider = new GoogleAuthProvider();
+
+        const actualToday = new Date();
+        let displayYear = actualToday.getFullYear();
+        let displayMonth = actualToday.getMonth(); 
+        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+        let currentUser = null;
+        let accountsList = [];
+        let tradesList = []; 
+        let activeAccountId = localStorage.getItem('activeAccountId') || null;
+        let currentEditingTradeId = null;
+        let currentEditingAccountId = null;
+        let selectedFilesToUploadBase64 = []; 
+        let unsubscribeTrades = null; 
+        let unsubscribeAccounts = null;
+
+        // --- Formatting Utils ---
+        function formatMoney(amount) {
+            const isNegative = amount < 0;
+            const absoluteAmount = Math.abs(amount);
+            const formatted = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(absoluteAmount);
+            return isNegative ? `-$${formatted}` : `$${formatted}`;
+        }
+        function getDateKey(year, month, day) {
+            return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        }
+        function isTodayMatch(year, month, day) {
+            return (day === actualToday.getDate() && month === actualToday.getMonth() && year === actualToday.getFullYear());
+        }
+        function getWeekOfMonth(saturdayDateNum) {
+            return Math.ceil(saturdayDateNum / 7);
+        }
+        function formatDateForTable(isoStr) {
+            if (!isoStr) return "-";
+            const d = new Date(isoStr);
+            return `${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}/${d.getFullYear().toString().slice(-2)} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+        }
+        function getNYDateStr(dateVal) {
+            return new Intl.DateTimeFormat('en-US', {
+                timeZone: 'America/New_York',
+                year: 'numeric', month: '2-digit', day: '2-digit'
+            }).format(new Date(dateVal));
+        }
+
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.ts-left')) {
+                document.getElementById('account-dropdown').classList.remove('show');
+            }
+        });
+
+        // --- Analytics Engine & Graph Drawing ---
+        window.addEventListener('resize', () => { if(currentUser) renderAnalytics(); });
+
+        function drawBalanceChart(startBal, dailyPnlMap) {
+            const canvas = document.getElementById('balance-chart');
+            const ctx = canvas.getContext('2d');
+            const parent = canvas.parentElement;
+            canvas.width = parent.clientWidth;
+            canvas.height = parent.clientHeight;
+            
+            const w = canvas.width;
+            const h = canvas.height;
+            ctx.clearRect(0, 0, w, h);
+            
+            // Sort NY Dates
+            let dates = Object.keys(dailyPnlMap).sort((a,b) => new Date(a) - new Date(b));
+            let plotData = [];
+            let currentBal = startBal;
+            
+            if (dates.length === 0) {
+                plotData.push({ xLabel: 'Start', bal: startBal });
+                plotData.push({ xLabel: 'Now', bal: startBal });
+            } else {
+                plotData.push({ xLabel: 'Start', bal: startBal });
+                dates.forEach(d => {
+                    currentBal += dailyPnlMap[d];
+                    let dateObj = new Date(d);
+                    let mmdd = `${String(dateObj.getMonth()+1).padStart(2,'0')}/${String(dateObj.getDate()).padStart(2,'0')}`;
+                    plotData.push({ xLabel: mmdd, bal: currentBal });
+                });
+            }
+            
+            let minBal = Math.min(...plotData.map(d => d.bal));
+            let maxBal = Math.max(...plotData.map(d => d.bal));
+            if (minBal === maxBal) { minBal -= 100; maxBal += 100; }
+            
+            const padding = (maxBal - minBal) * 0.1;
+            minBal -= padding; maxBal += padding;
+            
+            const padX = 60;
+            const padY = 30;
+            const drawW = w - padX * 1.5;
+            const drawH = h - padY * 2;
+            
+            ctx.fillStyle = '#717175';
+            ctx.font = '10px Oswald';
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'middle';
+            
+            const yLines = 5;
+            for (let i=0; i<=yLines; i++) {
+                let yVal = maxBal - ((maxBal - minBal) * (i / yLines));
+                let yCoord = padY + (drawH * (i / yLines));
+                
+                ctx.beginPath();
+                ctx.moveTo(padX, yCoord);
+                ctx.lineTo(w - padX/2, yCoord);
+                ctx.strokeStyle = '#333539';
+                ctx.stroke();
+                
+                ctx.fillText(yVal.toLocaleString('en-US', {maximumFractionDigits:0}), padX - 10, yCoord);
+            }
+            
+            ctx.save();
+            ctx.translate(15, h/2);
+            ctx.rotate(-Math.PI/2);
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#717175';
+            ctx.fillText("Balance", 0, 0);
+            ctx.restore();
+            
+            let points = plotData.map((d, i) => {
+                let x = padX + (drawW * (i / (plotData.length - 1 || 1)));
+                let y = padY + drawH - (drawH * ((d.bal - minBal) / (maxBal - minBal)));
+                return { x, y, label: d.xLabel };
+            });
+            
+            ctx.beginPath();
+            ctx.moveTo(points[0].x, padY + drawH);
+            points.forEach(p => ctx.lineTo(p.x, p.y));
+            ctx.lineTo(points[points.length-1].x, padY + drawH);
+            ctx.closePath();
+            
+            let grad = ctx.createLinearGradient(0, padY, 0, padY + drawH);
+            grad.addColorStop(0, 'rgba(255, 255, 255, 0.15)');
+            grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            ctx.fillStyle = grad;
+            ctx.fill();
+            
+            ctx.beginPath();
+            points.forEach((p, i) => {
+                if (i === 0) ctx.moveTo(p.x, p.y);
+                else ctx.lineTo(p.x, p.y);
+            });
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            points.forEach((p, i) => {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 3, 0, Math.PI*2);
+                ctx.fillStyle = '#ffffff';
+                ctx.fill();
+                
+                ctx.fillStyle = '#717175';
+                ctx.fillText(p.label, p.x, padY + drawH + 10);
+            });
+            
+            ctx.fillText("Date", padX + drawW/2, h - 10);
+        }
+
+        function renderAnalytics() {
+            const activeAcc = accountsList.find(a => a.id === activeAccountId);
+            const container = document.getElementById('analytics-section');
+            if (!activeAcc) {
+                container.style.display = 'none';
+                return;
+            }
+            container.style.display = 'flex';
+            
+            const activeTrades = activeAccountId ? tradesList.filter(t => t.accountId === activeAccountId) : [];
+            let totalPnl = 0, grossProf = 0, grossLoss = 0, wins = 0, losses = 0;
+            let dailyPnlMap = {};
+
+            activeTrades.forEach(t => {
+                const pnl = parseFloat(t.pnl) || 0;
+                totalPnl += pnl;
+                if (pnl > 0) { wins++; grossProf += pnl; }
+                else if (pnl < 0) { losses++; grossLoss += Math.abs(pnl); }
+
+                let dToUse = t.exitTime || t.entryTime || parseInt(t.id);
+                let nyStr = getNYDateStr(dToUse);
+                
+                if (!dailyPnlMap[nyStr]) dailyPnlMap[nyStr] = 0;
+                dailyPnlMap[nyStr] += pnl;
+            });
+
+            // Total P&L
+            const pnlEl = document.getElementById('a-total-pnl');
+            pnlEl.textContent = formatMoney(totalPnl);
+            pnlEl.className = 'ac-val ' + (totalPnl > 0 ? 'color-pos' : (totalPnl < 0 ? 'color-neg' : 'text-muted'));
+
+            // Trade Win %
+            const totalTrades = wins + losses;
+            const winPerc = totalTrades > 0 ? (wins / totalTrades) * 100 : 0;
+            document.getElementById('a-trade-win-perc').textContent = winPerc.toFixed(2) + '%';
+            document.getElementById('a-trade-win-path').style.strokeDashoffset = 125.6 - (125.6 * (winPerc / 100));
+            document.getElementById('a-trade-wins').textContent = wins;
+            document.getElementById('a-trade-losses').textContent = losses;
+            
+            // Avg Win / Loss
+            const avgWin = wins > 0 ? grossProf / wins : 0;
+            const avgLoss = losses > 0 ? grossLoss / losses : 0;
+            const avgRatio = avgLoss > 0 ? (avgWin / avgLoss) : (avgWin > 0 ? avgWin : 0);
+            document.getElementById('a-avg-ratio').textContent = avgRatio.toFixed(2);
+            document.getElementById('a-avg-win-val').textContent = formatMoney(avgWin);
+            document.getElementById('a-avg-loss-val').textContent = formatMoney(-avgLoss);
+            const totalAvg = avgWin + avgLoss;
+            const barFill = totalAvg > 0 ? (avgWin / totalAvg) * 100 : 50;
+            document.getElementById('a-avg-bar').style.width = barFill + '%';
+
+            // Day Win %
+            let winDays = 0, lossDays = 0, bestDayProf = 0;
+            Object.values(dailyPnlMap).forEach(dp => {
+                if (dp > 0) { winDays++; if (dp > bestDayProf) bestDayProf = dp; }
+                else if (dp < 0) { lossDays++; }
+            });
+            const totalDays = winDays + lossDays;
+            const dayWinPerc = totalDays > 0 ? (winDays / totalDays) * 100 : 0;
+            document.getElementById('a-day-win-perc').textContent = dayWinPerc.toFixed(2) + '%';
+            document.getElementById('a-day-win-path').style.strokeDashoffset = 125.6 - (125.6 * (dayWinPerc / 100));
+            document.getElementById('a-day-wins').textContent = winDays;
+
+            // Profit Factor
+            const pf = grossLoss > 0 ? (grossProf / grossLoss) : (grossProf > 0 ? '∞' : '0.00');
+            document.getElementById('a-profit-factor').textContent = typeof pf === 'number' ? pf.toFixed(2) : pf;
+            const pfRatio = (grossProf + grossLoss) > 0 ? (grossProf / (grossProf + grossLoss)) * 100 : 50;
+            document.getElementById('a-pf-path').style.strokeDashoffset = 251.2 - (251.2 * (pfRatio / 100));
+            document.getElementById('a-pf-gross-win').textContent = formatMoney(grossProf);
+            document.getElementById('a-pf-gross-loss').textContent = formatMoney(-grossLoss);
+
+            // Best Day %
+            const bestDayPerc = grossProf > 0 ? (bestDayProf / grossProf) * 100 : 0;
+            document.getElementById('a-best-day').textContent = bestDayPerc.toFixed(2) + '%';
+
+            drawBalanceChart(parseFloat(activeAcc.balance) || 0, dailyPnlMap);
+        }
+
+
+        // --- Account Management UI & Real-Time Stats ---
+        function renderTopBar() {
+            const activeAcc = accountsList.find(a => a.id === activeAccountId);
+            const selectorBtn = document.getElementById('active-account-display');
+            const drop = document.getElementById('account-dropdown');
+            
+            const activeTrades = activeAccountId ? tradesList.filter(t => t.accountId === activeAccountId) : [];
+
+            if (!activeAcc) {
+                selectorBtn.innerHTML = `<span style="color:#717175">Select or Create Account</span>`;
+                document.getElementById('ts-bal').textContent = '$0.00';
+                document.getElementById('ts-dll').textContent = '$0.00';
+                document.getElementById('ts-rpl').textContent = '$0.00';
+                document.getElementById('ts-rpl-box').className = 'stat-box';
+            } else {
+                let badgeText = activeAcc.type === 'Personal' ? 'PERSONAL' : (activeAcc.propType ? activeAcc.propType.toUpperCase() : 'PROP');
+                let nameText = activeAcc.type === 'Personal' ? (activeAcc.broker || 'Broker') : (activeAcc.firm || 'Firm');
+                
+                selectorBtn.innerHTML = `<span class="acct-badge">${badgeText}</span> <span style="color:#717175; margin: 0 6px;">|</span> <span style="color:#fff">${nameText}</span>`;
+                
+                const todayNY = getNYDateStr(new Date());
+                let totalRpl = 0;
+                let todayRpl = 0;
+
+                activeTrades.forEach(t => {
+                    const pnl = parseFloat(t.pnl) || 0;
+                    totalRpl += pnl; 
+                    
+                    let dToUse = t.exitTime || t.entryTime || parseInt(t.id);
+                    if (getNYDateStr(dToUse) === todayNY) {
+                        todayRpl += pnl; 
+                    }
+                });
+
+                const liveBal = (parseFloat(activeAcc.balance) || 0) + totalRpl;
+                document.getElementById('ts-bal').textContent = formatMoney(liveBal);
+                
+                if (activeAcc.type === 'Personal') {
+                    document.getElementById('ts-dll-box').style.display = 'none';
+                } else {
+                    document.getElementById('ts-dll-box').style.display = 'flex';
+                    const liveDll = (parseFloat(activeAcc.dailyDd) || 0) + todayRpl;
+                    document.getElementById('ts-dll').textContent = formatMoney(liveDll);
+                }
+                
+                document.getElementById('ts-rpl').textContent = formatMoney(todayRpl);
+                const rplBox = document.getElementById('ts-rpl-box');
+                if (todayRpl > 0) { rplBox.className = 'stat-box rpl-pos'; } 
+                else if (todayRpl < 0) { rplBox.className = 'stat-box rpl-neg'; } 
+                else { rplBox.className = 'stat-box'; }
+            }
+            
+            drop.innerHTML = '';
+            accountsList.forEach(a => {
+                const item = document.createElement('div');
+                item.className = 'dropdown-item';
+                let bText = a.type === 'Personal' ? 'PERSONAL' : (a.propType ? a.propType.toUpperCase() : 'PROP');
+                let nText = a.type === 'Personal' ? (a.broker || 'Broker') : (a.firm || 'Firm');
+                item.innerHTML = `<span class="acct-badge">${bText}</span> <span style="color:#717175; margin: 0 6px;">|</span> <span style="color:#fff">${nText}</span>`;
+                item.onclick = () => {
+                    activeAccountId = a.id;
+                    localStorage.setItem('activeAccountId', a.id);
+                    drop.classList.remove('show');
+                    renderTopBar();
+                    renderAnalytics();
+                    renderCalendar();
+                    renderTradesTable();
+                };
+                drop.appendChild(item);
+            });
+            
+            const createBtn = document.createElement('div');
+            createBtn.className = 'dropdown-item';
+            createBtn.style.color = 'var(--accent-blue)';
+            createBtn.textContent = '+ Create New Account';
+            createBtn.onclick = () => { drop.classList.remove('show'); window.openAccountForm(); };
+            drop.appendChild(createBtn);
+        }
+
+        window.toggleAccountFields = function() {
+            const type = document.getElementById('a-type').value;
+            const pType = document.getElementById('a-prop-type').value;
+            
+            if (type === 'Personal') {
+                document.getElementById('group-broker').style.display = 'block';
+                document.getElementById('group-prop').style.display = 'none';
+                document.getElementById('group-drawdown').style.display = 'none';
+                document.getElementById('group-target').style.display = 'none';
+            } else {
+                document.getElementById('group-broker').style.display = 'none';
+                document.getElementById('group-prop').style.display = 'grid';
+                
+                if (pType === 'Funded') {
+                    document.getElementById('group-drawdown').style.display = 'grid';
+                    document.getElementById('group-target').style.display = 'none';
+                } else {
+                    document.getElementById('group-drawdown').style.display = 'grid';
+                    document.getElementById('group-target').style.display = 'block';
+                }
+            }
+        }
+
+        window.openAccountForm = function(accId = null) {
+            window.closeModals();
+            currentEditingAccountId = accId;
+            const title = document.getElementById('account-modal-title');
+
+            if (accId) {
+                title.textContent = "Edit Account";
+                const acc = accountsList.find(a => a.id === accId);
+                if(acc){
+                    document.getElementById('a-balance').value = acc.balance || '';
+                    document.getElementById('a-type').value = acc.type || 'Prop Firm';
+                    document.getElementById('a-prop-type').value = acc.propType || '1-step';
+                    document.getElementById('a-firm').value = acc.firm || '';
+                    document.getElementById('a-broker').value = acc.broker || '';
+                    document.getElementById('a-max-dd').value = acc.maxDd || '';
+                    document.getElementById('a-daily-dd').value = acc.dailyDd || '';
+                    document.getElementById('a-target').value = acc.target || '';
+                }
+            } else {
+                title.textContent = "Create Account";
+                document.getElementById('a-balance').value = '';
+                document.getElementById('a-type').value = 'Prop Firm';
+                document.getElementById('a-prop-type').value = '1-step';
+                document.getElementById('a-firm').value = '';
+                document.getElementById('a-broker').value = '';
+                document.getElementById('a-max-dd').value = '';
+                document.getElementById('a-daily-dd').value = '';
+                document.getElementById('a-target').value = '';
+            }
+            window.toggleAccountFields();
+            document.getElementById('account-form-modal').classList.add('active');
+        }
+
+        window.saveAccount = async function() {
+            if (!currentUser) return;
+            const type = document.getElementById('a-type').value;
+            const propType = document.getElementById('a-prop-type').value;
+            
+            const accData = {
+                balance: parseFloat(document.getElementById('a-balance').value) || 0,
+                type: type,
+            };
+            
+            if (type === 'Personal') {
+                accData.broker = document.getElementById('a-broker').value;
+            } else {
+                accData.firm = document.getElementById('a-firm').value;
+                accData.propType = propType;
+                accData.maxDd = parseFloat(document.getElementById('a-max-dd').value) || 0;
+                accData.dailyDd = parseFloat(document.getElementById('a-daily-dd').value) || 0;
+                if (propType !== 'Funded') {
+                    accData.target = parseFloat(document.getElementById('a-target').value) || 0;
+                }
+            }
+            
+            const isNew = !currentEditingAccountId;
+            const accId = currentEditingAccountId || Date.now().toString();
+            await setDoc(doc(db, 'users', currentUser.uid, 'accounts', accId), accData);
+            
+            if (isNew && tradesList.some(t => !t.accountId)) {
+                tradesList.forEach(t => {
+                    if (!t.accountId) {
+                        setDoc(doc(db, 'users', currentUser.uid, 'trades', t.id), { ...t, accountId: accId });
+                    }
+                });
+            }
+            
+            activeAccountId = accId;
+            localStorage.setItem('activeAccountId', accId);
+            window.closeModals();
+        }
+
+        window.openAccountInfo = function() {
+            const acc = accountsList.find(a => a.id === activeAccountId);
+            if (!acc) return;
+            
+            document.getElementById('ai-bal').textContent = formatMoney(acc.balance);
+            document.getElementById('ai-type').textContent = acc.type + (acc.type === 'Prop Firm' ? ` (${acc.propType})` : '');
+            
+            document.getElementById('ai-provider-label').textContent = acc.type === 'Personal' ? 'Broker Name' : 'Prop Firm';
+            document.getElementById('ai-provider').textContent = acc.type === 'Personal' ? (acc.broker||'-') : (acc.firm||'-');
+            
+            if (acc.type === 'Personal') {
+                document.getElementById('ai-daily-group').style.display = 'none';
+                document.getElementById('ai-max-group').style.display = 'none';
+                document.getElementById('ai-target-group').style.display = 'none';
+            } else {
+                document.getElementById('ai-daily-group').style.display = 'block';
+                document.getElementById('ai-max-group').style.display = 'block';
+                document.getElementById('ai-daily-dd').textContent = formatMoney(acc.dailyDd || 0);
+                document.getElementById('ai-max-dd').textContent = formatMoney(acc.maxDd || 0);
+                
+                if (acc.propType === 'Funded') {
+                    document.getElementById('ai-target-group').style.display = 'none';
+                } else {
+                    document.getElementById('ai-target-group').style.display = 'block';
+                    document.getElementById('ai-target').textContent = formatMoney(acc.target || 0);
+                }
+            }
+
+            document.getElementById('account-info-modal').classList.add('active');
+        }
+
+        window.openEditAccount = function() {
+            window.openAccountForm(activeAccountId);
+        }
+
+        window.deleteAccount = async function() {
+            if (confirm("Are you sure you want to delete this account? Your trades will become unassigned.")) {
+                await deleteDoc(doc(db, 'users', currentUser.uid, 'accounts', activeAccountId));
+                activeAccountId = null;
+                localStorage.removeItem('activeAccountId');
+                window.closeModals();
+            }
+        }
+
+
+        // --- Core Rendering: Calendar ---
+        function renderCalendar() {
+            const grid = document.getElementById('calendar-grid');
+            grid.innerHTML = '';
+            document.getElementById('month-year-label').textContent = `${monthNames[displayMonth]} ${displayYear}`;
+
+            const activeTrades = activeAccountId ? tradesList.filter(t => t.accountId === activeAccountId) : [];
+
+            let journalData = {};
+            activeTrades.forEach(t => {
+                let dateToUse = t.exitTime || t.entryTime;
+                let d;
+                if (dateToUse) d = new Date(dateToUse);
+                else d = new Date(parseInt(t.id)); 
+
+                if (isNaN(d.getTime())) return; 
+
+                const dKey = getDateKey(d.getFullYear(), d.getMonth(), d.getDate());
+                if (!journalData[dKey]) journalData[dKey] = { pnl: 0, trades: 0 };
+                
+                journalData[dKey].pnl += parseFloat(t.pnl || 0);
+                journalData[dKey].trades += 1;
+            });
+
+            const firstDayOfMonth = new Date(displayYear, displayMonth, 1).getDay();
+            const daysInCurrentMonth = new Date(displayYear, displayMonth + 1, 0).getDate();
+            const daysInPrevMonth = new Date(displayYear, displayMonth, 0).getDate();
+            const totalRows = 6; 
+
+            let currentDayCount = 1;
+            let nextMonthDayCount = 1;
+            let totalMonthlyPnl = 0;
+
+            for (let row = 0; row < totalRows; row++) {
+                let weeklyPnlSum = 0;
+                let weeklyTradesSum = 0;
+                let rowSaturdayDateNum = 1;
+
+                let rowCellsData = [];
+                for (let col = 0; col < 7; col++) {
+                    let cellDayNum, cellYear = displayYear, cellMonth = displayMonth, isCurrentMonthCell = false;
+                    
+                    if (row === 0 && col < firstDayOfMonth) {
+                        cellDayNum = daysInPrevMonth - firstDayOfMonth + col + 1;
+                        cellMonth = displayMonth - 1;
+                        if (cellMonth < 0) { cellMonth = 11; cellYear--; }
+                    } else if (currentDayCount <= daysInCurrentMonth) {
+                        cellDayNum = currentDayCount;
+                        isCurrentMonthCell = true;
+                        currentDayCount++;
+                    } else {
+                        cellDayNum = nextMonthDayCount;
+                        cellMonth = displayMonth + 1;
+                        if (cellMonth > 11) { cellMonth = 0; cellYear++; }
+                        nextMonthDayCount++;
+                    }
+
+                    const dateKey = getDateKey(cellYear, cellMonth, cellDayNum);
+                    const cellData = journalData[dateKey];
+
+                    if (col < 6 && cellData) {
+                        weeklyPnlSum += cellData.pnl;
+                        weeklyTradesSum += cellData.trades;
+                    }
+                    if (isCurrentMonthCell && col < 6 && cellData) {
+                        totalMonthlyPnl += cellData.pnl;
+                    }
+                    if (col === 6) {
+                        rowSaturdayDateNum = cellDayNum;
+                    }
+
+                    rowCellsData.push({ cellDayNum, cellYear, cellMonth, isCurrentMonthCell, dateKey, cellData, isToday: isTodayMatch(cellYear, cellMonth, cellDayNum) });
+                }
+
+                for (let col = 0; col < 7; col++) {
+                    const dataObj = rowCellsData[col];
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+
+                    if (!dataObj.isCurrentMonthCell) cell.classList.add('out-of-month');
+                    if (dataObj.isToday) cell.classList.add('today-outline');
+
+                    let circleClass = dataObj.isToday ? 'circle today-circle' : 'circle';
+                    cell.innerHTML = `<div class="date-number"><div class="${circleClass}">${dataObj.cellDayNum}</div></div>`;
+
+                    if (col < 6) {
+                        cell.classList.add('interactive');
+                        if (dataObj.cellData) {
+                            let pnlClass = dataObj.cellData.pnl > 0 ? 'positive' : (dataObj.cellData.pnl < 0 ? 'negative' : 'neutral');
+                            if (dataObj.cellData.pnl > 0) cell.classList.add('positive');
+                            else if (dataObj.cellData.pnl < 0) cell.classList.add('negative');
+
+                            cell.innerHTML += `
+                                <div class="data-wrapper">
+                                    <div class="pnl-text ${pnlClass}">${formatMoney(dataObj.cellData.pnl)}</div>
+                                    <div class="trades-text">${dataObj.cellData.trades} trades</div>
+                                </div>
+                            `;
+                        }
+                        cell.onclick = () => window.openModal(dataObj.dateKey, dataObj.cellData, dataObj.cellDayNum, monthNames[dataObj.cellMonth], dataObj.cellYear);
+                    } else {
+                        let weekPnlClass = weeklyPnlSum > 0 ? 'positive' : (weeklyPnlSum < 0 ? 'negative' : 'neutral');
+                        let weekNum = getWeekOfMonth(rowSaturdayDateNum);
+
+                        if (weeklyTradesSum > 0 || weeklyPnlSum !== 0) {
+                            cell.innerHTML += `
+                                <div class="data-wrapper">
+                                    <div class="week-label">Week ${weekNum}</div>
+                                    <div class="pnl-text ${weekPnlClass}">${formatMoney(weeklyPnlSum)}</div>
+                                    <div class="trades-text">${weeklyTradesSum} trades</div>
+                                </div>
+                            `;
+                        } else {
+                            cell.innerHTML += `
+                                <div class="data-wrapper">
+                                    <div class="week-label">Week ${weekNum}</div>
+                                    <div class="pnl-text neutral">$0.00</div>
+                                    <div class="trades-text neutral">0 trades</div>
+                                </div>
+                            `;
+                        }
+                    }
+                    grid.appendChild(cell);
+                }
+            }
+
+            const headerPnlElement = document.getElementById('monthly-pnl');
+            headerPnlElement.textContent = formatMoney(totalMonthlyPnl);
+            headerPnlElement.className = 'monthly-pnl-val';
+            if (totalMonthlyPnl > 0) headerPnlElement.classList.add('positive');
+            else if (totalMonthlyPnl < 0) headerPnlElement.classList.add('negative');
+            else headerPnlElement.classList.add('neutral');
+        }
+
+        // --- Core Rendering: Trades Table ---
+        function renderTradesTable() {
+            const tbody = document.getElementById('trades-tbody');
+            const noMsg = document.getElementById('no-trades-msg');
+            const pageInfo = document.getElementById('pagination-info');
+            tbody.innerHTML = '';
+            
+            const activeTrades = activeAccountId ? tradesList.filter(t => t.accountId === activeAccountId) : [];
+            const sortedTrades = activeTrades.sort((a,b) => parseInt(b.id) - parseInt(a.id));
+
+            if (sortedTrades.length === 0) {
+                noMsg.style.display = 'block';
+                pageInfo.textContent = '0-0 of 0';
+                return;
+            }
+
+            noMsg.style.display = 'none';
+            pageInfo.textContent = `1-${sortedTrades.length} of ${sortedTrades.length}`;
+
+            sortedTrades.forEach(trade => {
+                const tr = document.createElement('tr');
+                tr.onclick = () => window.openOverview(trade.id);
+                
+                let pnlClass = trade.pnl > 0 ? 'color-pos' : (trade.pnl < 0 ? 'color-neg' : 'text-muted');
+                let sideHtml = trade.side === 'Buy' ? `<span style="color:var(--color-pos)">Buy ↑</span>` : `<span style="color:var(--color-neg)">Sell ↓</span>`;
+                
+                tr.innerHTML = `
+                    <td style="font-weight:500;">${trade.ticker || '-'}</td>
+                    <td>${sideHtml}</td>
+                    <td>${formatDateForTable(trade.entryTime)}</td>
+                    <td>${formatDateForTable(trade.exitTime)}</td>
+                    <td>${trade.size || '-'}</td>
+                    <td>1:${trade.rr || '-'}</td>
+                    <td>${trade.rating || '-'} / 10</td>
+                    <td style="font-weight:600; color: var(--${pnlClass})">${formatMoney(trade.pnl || 0)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // --- Modals & Interactions ---
+        window.openAuthModal = function() {
+            document.getElementById('auth-error').textContent = "";
+            document.getElementById('auth-modal').classList.add('active');
+        }
+        
+        window.openProfileModal = function() {
+            document.getElementById('profile-modal').classList.add('active');
+        }
+
+        window.handleEmailLogin = async function() {
+            const email = document.getElementById('auth-email').value;
+            const pass = document.getElementById('auth-password').value;
+            try {
+                await signInWithEmailAndPassword(auth, email, pass);
+                closeModals();
+            } catch (error) {
+                document.getElementById('auth-error').textContent = error.message.replace("Firebase:", "");
+            }
+        }
+
+        window.handleEmailSignup = async function() {
+            const email = document.getElementById('auth-email').value;
+            const pass = document.getElementById('auth-password').value;
+            try {
+                await createUserWithEmailAndPassword(auth, email, pass);
+                closeModals();
+            } catch (error) {
+                document.getElementById('auth-error').textContent = error.message.replace("Firebase:", "");
+            }
+        }
+
+        window.handleGoogleLogin = async function() {
+            try {
+                await signInWithPopup(auth, googleProvider);
+                closeModals();
+            } catch (error) {
+                document.getElementById('auth-error').textContent = error.message.replace("Firebase:", "");
+            }
+        }
+
+        window.handleLogout = async function() {
+            if (confirm("Are you sure you want to log out?")) {
+                await signOut(auth);
+                closeModals();
+            }
+        }
+
+        window.changeMonth = function(direction) {
+            displayMonth += direction;
+            if (displayMonth > 11) { displayMonth = 0; displayYear++; } 
+            else if (displayMonth < 0) { displayMonth = 11; displayYear--; }
+            renderCalendar();
+        }
+        window.goToToday = function() {
+            displayMonth = actualToday.getMonth();
+            displayYear = actualToday.getFullYear();
+            renderCalendar();
+        }
+
+        window.closeModals = function() {
+            document.getElementById('form-modal').classList.remove('active');
+            document.getElementById('overview-modal').classList.remove('active');
+            document.getElementById('image-viewer-modal').classList.remove('active');
+            document.getElementById('auth-modal').classList.remove('active');
+            document.getElementById('profile-modal').classList.remove('active');
+            document.getElementById('account-form-modal').classList.remove('active');
+            document.getElementById('account-info-modal').classList.remove('active');
+            currentEditingTradeId = null;
+            currentEditingAccountId = null;
+        }
+
+        window.openTradeForm = function(tradeId = null) {
+            if (!activeAccountId) {
+                alert("Please create an Account first before logging a trade.");
+                return;
+            }
+            window.closeModals();
+            currentEditingTradeId = tradeId;
+            selectedFilesToUploadBase64 = [];
+            document.getElementById('t-img-previews').innerHTML = '';
+            document.getElementById('t-images').value = '';
+
+            const title = document.getElementById('form-modal-title');
+            const btn = document.getElementById('save-trade-btn');
+            btn.disabled = false; 
+
+            if (tradeId) {
+                title.textContent = "Edit Trade";
+                btn.textContent = "Update Trade";
+                const trade = tradesList.find(t => t.id === tradeId);
+                if (trade) {
+                    document.getElementById('t-ticker').value = trade.ticker || '';
+                    document.getElementById('t-side').value = trade.side || 'Buy';
+                    document.getElementById('t-entry').value = trade.entryTime || '';
+                    document.getElementById('t-exit').value = trade.exitTime || '';
+                    document.getElementById('t-size').value = trade.size || '';
+                    document.getElementById('t-pnl').value = trade.pnl || '';
+                    document.getElementById('t-rr').value = trade.rr || 1;
+                    document.getElementById('t-rr-val').textContent = '1:' + (trade.rr || 1);
+                    document.getElementById('t-rating').value = trade.rating || 5;
+                    document.getElementById('t-rating-val').textContent = trade.rating || 5;
+                    document.getElementById('t-notes').value = trade.notes || '';
+                    
+                    if (trade.images && trade.images.length > 0) {
+                        trade.images.forEach(base64Str => {
+                            const img = document.createElement('img');
+                            img.src = base64Str;
+                            img.className = 'img-thumb';
+                            document.getElementById('t-img-previews').appendChild(img);
+                        });
+                    }
+                }
+            } else {
+                title.textContent = "Log a Trade";
+                btn.textContent = "Save Trade";
+                document.getElementById('t-ticker').value = '';
+                document.getElementById('t-side').value = 'Buy';
+                document.getElementById('t-entry').value = '';
+                document.getElementById('t-exit').value = '';
+                document.getElementById('t-size').value = '';
+                document.getElementById('t-pnl').value = '';
+                document.getElementById('t-rr').value = 1;
+                document.getElementById('t-rr-val').textContent = '1:1';
+                document.getElementById('t-rating').value = 5;
+                document.getElementById('t-rating-val').textContent = '5';
+                document.getElementById('t-notes').value = '';
+            }
+
+            document.getElementById('form-modal').classList.add('active');
+        }
+
+        window.previewFiles = function() {
+            const fileInput = document.getElementById('t-images');
+            const container = document.getElementById('t-img-previews');
+            const files = Array.from(fileInput.files);
+            
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const MAX_WIDTH = 1000; 
+                        const MAX_HEIGHT = 1000;
+                        let width = img.width;
+                        let height = img.height;
+                        if (width > height) { if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; } } 
+                        else { if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; } }
+                        canvas.width = width; canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6); 
+                        selectedFilesToUploadBase64.push(compressedBase64);
+
+                        const previewImg = document.createElement('img');
+                        previewImg.src = compressedBase64;
+                        previewImg.className = 'img-thumb';
+                        container.appendChild(previewImg);
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        window.openOverview = function(tradeId) {
+            const trade = tradesList.find(t => t.id === tradeId);
+            if (!trade) return;
+            currentEditingTradeId = tradeId;
+
+            document.getElementById('o-ticker').textContent = `${trade.ticker} Overview`;
+            const pnlEl = document.getElementById('o-pnl');
+            pnlEl.textContent = formatMoney(trade.pnl || 0);
+            pnlEl.style.color = trade.pnl > 0 ? "var(--color-pos)" : (trade.pnl < 0 ? "var(--color-neg)" : "var(--text-main)");
+
+            const sideEl = document.getElementById('o-side');
+            sideEl.innerHTML = trade.side === 'Buy' ? `<span style="color:var(--color-pos)">Buy ↑</span>` : `<span style="color:var(--color-neg)">Sell ↓</span>`;
+
+            document.getElementById('o-entry').textContent = formatDateForTable(trade.entryTime);
+            document.getElementById('o-exit').textContent = formatDateForTable(trade.exitTime);
+            document.getElementById('o-size').textContent = trade.size || '-';
+            document.getElementById('o-rr').textContent = '1:' + (trade.rr || '-');
+            document.getElementById('o-rating').textContent = (trade.rating || '-') + ' / 10';
+            document.getElementById('o-notes').textContent = trade.notes || 'No notes.';
+
+            const imgContainer = document.getElementById('o-img-container');
+            const imagesDiv = document.getElementById('o-images');
+            imagesDiv.innerHTML = '';
+            
+            if (trade.images && trade.images.length > 0) {
+                imgContainer.style.display = 'block';
+                trade.images.forEach(base64Str => {
+                    const img = document.createElement('img');
+                    img.src = base64Str;
+                    img.className = 'img-thumb';
+                    img.onclick = () => window.openImageViewer(base64Str);
+                    imagesDiv.appendChild(img);
+                });
+            } else {
+                imgContainer.style.display = 'none';
+            }
+            document.getElementById('overview-modal').classList.add('active');
+        }
+
+        window.openEditFromOverview = function() {
+            const tid = currentEditingTradeId;
+            closeModals();
+            openTradeForm(tid);
+        }
+
+        window.deleteTradeFromOverview = async function() {
+            if (!currentEditingTradeId || !currentUser) return;
+            if (confirm("Are you sure you want to delete this trade?")) {
+                const btn = document.querySelector('.btn-delete');
+                btn.textContent = "Deleting...";
+                try {
+                    await deleteDoc(doc(db, 'users', currentUser.uid, 'trades', currentEditingTradeId));
+                    window.closeModals();
+                } catch (e) {
+                    console.error("Delete Error", e);
+                } finally {
+                    btn.textContent = "Delete Trade";
+                }
+            }
+        }
+
+        window.openImageViewer = function(url) {
+            document.getElementById('fullscreen-img').src = url;
+            document.getElementById('image-viewer-modal').classList.add('active');
+        }
+        window.closeImageViewer = function() {
+            document.getElementById('image-viewer-modal').classList.remove('active');
+        }
+
+        window.saveTrade = async function() {
+            if (!currentUser || !activeAccountId) return;
+            const btn = document.getElementById('save-trade-btn');
+            btn.textContent = "Saving...";
+            btn.disabled = true;
+
+            try {
+                const tradeData = {
+                    accountId: activeAccountId,
+                    ticker: document.getElementById('t-ticker').value,
+                    side: document.getElementById('t-side').value,
+                    entryTime: document.getElementById('t-entry').value,
+                    exitTime: document.getElementById('t-exit').value,
+                    size: parseFloat(document.getElementById('t-size').value) || 0,
+                    pnl: parseFloat(document.getElementById('t-pnl').value) || 0,
+                    rr: parseFloat(document.getElementById('t-rr').value) || 1,
+                    rating: parseInt(document.getElementById('t-rating').value) || 5,
+                    notes: document.getElementById('t-notes').value,
+                    images: []
+                };
+
+                if (currentEditingTradeId) {
+                    const existingTrade = tradesList.find(t => t.id === currentEditingTradeId);
+                    if (existingTrade && existingTrade.images) {
+                        tradeData.images = [...existingTrade.images];
+                    }
+                }
+
+                if (selectedFilesToUploadBase64.length > 0) {
+                    tradeData.images.push(...selectedFilesToUploadBase64);
+                }
+
+                const tradeId = currentEditingTradeId || Date.now().toString(); 
+                await setDoc(doc(db, 'users', currentUser.uid, 'trades', tradeId), tradeData);
+
+                window.closeModals();
+            } catch (error) {
+                console.error("Error saving trade:", error);
+            } finally {
+                btn.textContent = currentEditingTradeId ? "Update Trade" : "Save Trade";
+                btn.disabled = false; 
+            }
+        }
+
+        document.querySelectorAll('.modal-overlay').forEach(el => {
+            el.addEventListener('click', function(e) {
+                if (e.target === this) window.closeModals();
+            });
+        });
+
+        // --- Firebase Session Listeners ---
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                document.getElementById('auth-screen').style.display = 'none';
+                document.getElementById('main-app').style.display = 'flex';
+                document.getElementById('profile-btn').style.display = 'flex';
+                document.getElementById('profile-email-display').textContent = user.email || 'Logged in securely';
+                
+                // 1. Listen to Accounts
+                const accountsRef = collection(db, 'users', user.uid, 'accounts');
+                if (unsubscribeAccounts) unsubscribeAccounts();
+                unsubscribeAccounts = onSnapshot(accountsRef, (snapshot) => {
+                    accountsList = [];
+                    snapshot.forEach(doc => accountsList.push({ id: doc.id, ...doc.data() }));
+                    
+                    if (accountsList.length > 0) {
+                        if (!activeAccountId || !accountsList.find(a => a.id === activeAccountId)) {
+                            activeAccountId = accountsList[0].id;
+                            localStorage.setItem('activeAccountId', activeAccountId);
+                        }
+                    } else {
+                        activeAccountId = null;
+                        localStorage.removeItem('activeAccountId');
+                    }
+                    renderTopBar();
+                    renderAnalytics();
+                });
+
+                // 2. Listen to Trades
+                const tradesRef = collection(db, 'users', user.uid, 'trades');
+                if (unsubscribeTrades) unsubscribeTrades(); 
+                unsubscribeTrades = onSnapshot(tradesRef, (snapshot) => {
+                    tradesList = [];
+                    snapshot.forEach(doc => tradesList.push({ id: doc.id, ...doc.data() }));
+                    renderTopBar();
+                    renderAnalytics();
+                    renderCalendar(); 
+                    renderTradesTable();
+                });
+            } else {
+                currentUser = null;
+                accountsList = [];
+                tradesList = [];
+                if (unsubscribeTrades) unsubscribeTrades();
+                if (unsubscribeAccounts) unsubscribeAccounts();
+                document.getElementById('auth-screen').style.display = 'flex';
+                document.getElementById('main-app').style.display = 'none';
+                document.getElementById('profile-btn').style.display = 'none';
+            }
+        });
+
+    </script>
+</body>
+</html>
